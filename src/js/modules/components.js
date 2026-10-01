@@ -1,0 +1,5 @@
+import {obterTema,salvarTema} from './storage.js';
+let ultimoFoco=null;
+export function iniciarComponentes(){const menuBtn=document.querySelector('#menuToggle');const menu=document.querySelector('#menu');menuBtn.addEventListener('click',()=>{const aberto=menu.classList.toggle('ativo');menuBtn.setAttribute('aria-expanded',String(aberto))});document.querySelector('#themeToggle').addEventListener('click',()=>{const escuro=document.body.classList.toggle('dark');salvarTema(escuro?'escuro':'claro')});if(obterTema()==='escuro')document.body.classList.add('dark');document.querySelector('#fecharModal').addEventListener('click',fecharModal);document.querySelector('#modal').addEventListener('click',e=>{if(e.target.id==='modal')fecharModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharModal()})}
+export function abrirModal(){ultimoFoco=document.activeElement;const modal=document.querySelector('#modal');modal.hidden=false;document.querySelector('#fecharModal').focus()}
+export function fecharModal(){const modal=document.querySelector('#modal');if(!modal.hidden){modal.hidden=true;ultimoFoco?.focus()}}
