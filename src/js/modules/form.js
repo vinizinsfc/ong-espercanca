@@ -1,4 +1,99 @@
-import {salvarCadastro} from './storage.js';
-const regras={nome:v=>v.trim().length>=3,email:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),cpf:v=>/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v),telefone:v=>/^\(\d{2}\) \d{5}-\d{4}$/.test(v),cep:v=>/^\d{5}-\d{3}$/.test(v)};
-function validarCampo(campo){const regra=regras[campo.name];if(!regra)return campo.checkValidity();const ok=regra(campo.value);campo.classList.toggle('valido',ok);campo.classList.toggle('invalido',!ok);campo.setAttribute('aria-invalid',String(!ok));const erro=document.querySelector(`#erro-${campo.name}`);if(erro)erro.textContent=ok?'':`Verifique o campo ${campo.labels?.[0]?.textContent||campo.name}.`;return ok}
-export function iniciarFormulario(){const form=document.querySelector('#formCadastro');if(!form)return;form.querySelectorAll('input').forEach(c=>c.addEventListener('input',()=>validarCampo(c)));form.addEventListener('submit',e=>{e.preventDefault();const campos=[...form.querySelectorAll('input[required]')];const valido=campos.every(validarCampo);if(!valido){campos.find(c=>c.getAttribute('aria-invalid')==='true')?.focus();return}const dados=Object.fromEntries(new FormData(form).entries());dados.criadoEm=new Date().toISOString();salvarCadastro(dados);form.reset();form.querySelectorAll('input').forEach(c=>c.classList.remove('valido','invalido'));window.Swal?.fire({icon:'success',title:'Cadastro realizado!',text:'Seus dados foram salvos localmente.'})||alert('Cadastro realizado!')})}
+import { salvarCadastro } from './storage.js';
+
+const regras = {
+  nome: (valor) => valor.trim().length >= 3,
+
+  email: (valor) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor),
+
+  cpf: (valor) =>
+    /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(valor),
+
+  telefone: (valor) =>
+    /^\(\d{2}\) \d{5}-\d{4}$/.test(valor),
+
+  cep: (valor) =>
+    /^\d{5}-\d{3}$/.test(valor)
+};
+
+function validarCampo(campo) {
+  const regra = regras[campo.name];
+
+  if (!regra) {
+    return true;
+  }
+
+  const valido = regra(campo.value);
+
+  campo.classList.toggle('campo-invalido', !valido);
+  campo.classList.toggle('campo-valido', valido);
+
+  campo.setAttribute('aria-invalid', String(!valido));
+
+  const mensagem = campo.parentElement.querySelector('.mensagem-erro');
+
+  if (mensagem) {
+    mensagem.textContent = valido
+      ? ''
+      : 'Verifique o preenchimento deste campo.';
+  }
+
+  return valido;
+}
+
+export function iniciarFormulario() {
+  const form = document.querySelector('#formCadastro');
+
+  if (!form) return;
+
+  const campos = form.querySelectorAll('input');
+
+  campos.forEach((campo) => {
+    campo.addEventListener('input', () => {
+      validarCampo(campo);
+    });
+
+    campo.addEventListener('blur', () => {
+      validarCampo(campo);
+    });
+  });
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    let formularioValido = true;
+
+    campos.forEach((campo) => {
+      if (!validarCampo(campo)) {
+        formularioValido = false;
+      }
+    });
+
+    if (!formularioValido) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Dados inválidos',
+        text: 'Corrija os campos destacados antes de continuar.'
+      });
+
+      return;
+    }
+
+    const dados = Object.fromEntries(new FormData(form).entries());
+
+    salvarCadastro(dados);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Cadastro realizado!',
+      text: 'Seus dados foram armazenados com sucesso.'
+    });
+
+    form.reset();
+
+    campos.forEach((campo) => {
+      campo.classList.remove('campo-valido', 'campo-invalido');
+      campo.setAttribute('aria-invalid', 'false');
+    });
+  });
+}
